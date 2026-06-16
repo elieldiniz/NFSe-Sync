@@ -61,8 +61,8 @@ npm install
 
 ### Desenvolvimento
 ```bash
-# Inicie a aplicação em modo de desenvolvimento
-npm run dev
+# Inicie a aplicação em modo de desenvolvimento com flags de depuração
+ELECTRON_DISABLE_SANDBOX=1 ELECTRON_ENABLE_LOGING=1 npx electron-vite dev -- --disable-gpu --no-sandbox
 ```
 
 ### Build
