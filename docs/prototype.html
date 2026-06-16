@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NFSe Sync Prototype</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body,#root{font-family:system-ui,-apple-system,sans-serif;color:#111827;background:#f3f4f6;padding:20px;height:100vh;display:flex;align-items:center;justify-content:center}
+  :root{
+    --blue:#2563EB;--blue-light:#EFF6FF;--blue-mid:#DBEAFE;
+    --green:#10B981;--green-light:#D1FAE5;
+    --red:#EF4444;--red-light:#FEE2E2;
+    --amber:#F59E0B;--amber-light:#FEF3C7;
+    --gray:#6B7280;
+    --color-text-primary:#111827;
+    --color-text-secondary:#4B5563;
+    --color-text-tertiary:#9CA3AF;
+    --color-background-primary:#ffffff;
+    --color-background-secondary:#f9fafb;
+    --color-border-secondary:#d1d5db;
+    --color-border-tertiary:#e5e7eb;
+    --font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+    --font-sans:system-ui,-apple-system,sans-serif;
+    --sidebar:240px;
+    --r:12px;
+    --border-radius-md:8px;
+    --border-radius-lg:12px;
+  }
+  #root{width:100%;max-width:1000px;display:flex;height:650px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;background:var(--color-background-secondary);box-shadow:0 10px 25px rgba(0,0,0,0.1)}
+
+  /* SIDEBAR */
+  #sidebar{width:var(--sidebar);flex-shrink:0;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;overflow:hidden}
+  .sb-logo{padding:16px 16px 12px;border-bottom:0.5px solid var(--color-border-tertiary)}
+  .sb-logo .brand{font-size:16px;font-weight:500;color:var(--color-text-primary)}
+  .sb-logo .brand span{color:var(--blue)}
+  .sb-logo .sub{font-size:10px;color:var(--color-text-tertiary);font-family:var(--font-mono);letter-spacing:1px;margin-top:2px}
+  .sb-nav{padding:8px 8px;flex:1;overflow-y:auto}
+  .sb-sec{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-text-tertiary);padding:10px 8px 4px;font-family:var(--font-mono)}
+  .sb-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--color-text-secondary);margin-bottom:1px;transition:background .12s}
+  .sb-item:hover{background:var(--color-background-secondary)}
+  .sb-item.active{background:var(--blue-light);color:var(--blue);font-weight:500}
+  .sb-item i{font-size:15px;width:16px}
+  .sb-tray{border-top:0.5px solid var(--color-border-tertiary);padding:10px 12px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--color-text-tertiary)}
+  .sb-tray i{font-size:14px;color:var(--green)}
+
+  /* MAIN */
+  #main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .topbar{height:48px;background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;padding:0 20px;gap:8px;flex-shrink:0}
+  .topbar-title{font-size:14px;font-weight:500}
+  .topbar-sep{color:var(--color-border-secondary)}
+  .topbar-sub{font-size:12px;color:var(--color-text-secondary)}
+  .topbar-right{margin-left:auto;display:flex;gap:6px}
+  .content{flex:1;overflow-y:auto;padding:20px}
+  .page{display:none}.page.active{display:block}
+
+  /* CARDS */
+  .card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px 18px}
+  .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  .metric{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
+  .metric .val{font-size:22px;font-weight:500;color:var(--color-text-primary);line-height:1.1}
+  .metric .lbl{font-size:11px;color:var(--color-text-tertiary);margin-top:3px}
+  .metric .chg{font-size:11px;margin-top:4px}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);transition:all .12s;font-family:var(--font-sans)}
+  .btn:hover{background:var(--color-background-secondary)}
+  .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .btn.primary:hover{background:#1d4ed8}
+  .btn.danger{background:var(--red-light);color:var(--red);border-color:#FECACA}
+  .btn.sm{padding:5px 10px;font-size:12px}
+  .btn i{font-size:14px}
+
+  /* SYNC BUTTON BIG */
+  .sync-hero{text-align:center;padding:32px 0 24px}
+  .sync-hero p{font-size:13px;color:var(--color-text-secondary);margin-bottom:20px}
+  .btn-sync{font-size:15px;font-weight:500;padding:12px 32px;border-radius:var(--r);background:var(--blue);color:#fff;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .15s;font-family:var(--font-sans)}
+  .btn-sync:hover{background:#1d4ed8;transform:translateY(-1px)}
+
+  /* QUEUE PANEL */
+  #queue-panel{display:none;margin-bottom:16px}
+  .queue-info{background:var(--blue-light);border:0.5px solid var(--blue-mid);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:#1e40af;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .progress-bar-wrap{height:6px;background:var(--color-border-tertiary);border-radius:3px;overflow:hidden;margin-top:6px}
+  .progress-bar{height:6px;background:var(--blue);border-radius:3px;transition:width .5s}
+  .queue-list{display:flex;flex-direction:column;gap:6px}
+  .q-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;font-size:12px}
+  .q-item.processing{border-color:var(--blue);background:var(--blue-light)}
+  .q-item.limited{border-color:var(--amber);background:var(--amber-light)}
+  .q-item .q-name{font-weight:500;flex:1}
+  .q-item .q-nsu{color:var(--color-text-tertiary);font-family:var(--font-mono);font-size:11px}
+  .spin{display:inline-block;animation:spin .8s linear infinite;font-size:14px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* TABLE */
+  .tbl-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;padding:7px 10px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-tertiary);border-bottom:0.5px solid var(--color-border-tertiary);font-weight:500;font-family:var(--font-mono)}
+  td{padding:9px 10px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--color-background-secondary)}
+  .badge{display:inline-block;font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:5px;font-weight:500}
+  .badge.ok{background:var(--green-light);color:#065F46}
+  .badge.err{background:var(--red-light);color:#991B1B}
+  .badge.warn{background:var(--amber-light);color:#92400E}
+  .badge.run{background:var(--blue-light);color:#1e40af}
+  .badge.gray{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+
+  /* STATUS DOT */
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+  .dot.green{background:var(--green)}.dot.red{background:var(--red)}.dot.amber{background:var(--amber)}.dot.blue{background:var(--blue)}
+
+  /* TOGGLE */
+  .tog{position:relative;width:30px;height:17px;cursor:pointer}
+  .tog input{opacity:0;width:0;height:0;position:absolute}
+  .tog-track{position:absolute;inset:0;background:var(--color-border-secondary);border-radius:9px;transition:background .2s}
+  .tog input:checked~.tog-track{background:var(--blue)}
+  .tog-thumb{position:absolute;top:2px;left:2px;width:13px;height:13px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
+  .tog input:checked~.tog-thumb{transform:translateX(13px)}
+
+  /* MODAL */
+  .modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.38);display:flex;align-items:center;justify-content:center;border-radius:var(--border-radius-lg);z-index:100}
+  .modal{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:20px;width:340px}
+  .modal-title{font-size:15px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+  .modal-title button{background:none;border:none;cursor:pointer;color:var(--color-text-tertiary);font-size:18px;padding:0 2px;line-height:1}
+  .modal-title button:hover{color:var(--color-text-primary)}
+  label.field{display:block;font-size:12px;color:var(--color-text-secondary);margin-bottom:3px;margin-top:10px}
+  input[type=text],input[type=password]{width:100%;padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:13px;font-family:var(--font-sans);background:var(--color-background-primary);color:var(--color-text-primary)}
+  input[type=text]:focus,input[type=password]:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.15)}
+  .upload-zone{border:0.5px dashed var(--color-border-secondary);border-radius:8px;padding:18px;text-align:center;font-size:12px;color:var(--color-text-tertiary);cursor:pointer;margin-top:10px;transition:all .12s}
+  .upload-zone:hover{border-color:var(--blue);color:var(--blue)}
+  .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:14px;border-top:0.5px solid var(--color-border-tertiary)}
+
+  /* HELP */
+  .help-section{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .help-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px}
+  .help-card h3{font-size:13px;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .help-card h3 i{font-size:15px;color:var(--blue)}
+  .help-card p{font-size:12px;color:var(--color-text-secondary);line-height:1.5}
+  .glossary-item{display:flex;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+  .glossary-item:last-child{border:none}
+  .glossary-item .term{font-family:var(--font-mono);color:var(--blue);min-width:60px;flex-shrink:0}
+
+  /* SETTINGS */
+  .setting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+  .setting-row:last-child{border:none}
+  .setting-label{font-size:13px;font-weight:500}
+  .setting-desc{font-size:11px;color:var(--color-text-tertiary);margin-top:2px}
+  .path-field{display:flex;gap:6px;align-items:center}
+  .path-val{font-size:11px;font-family:var(--font-mono);background:var(--color-background-secondary);padding:5px 10px;border-radius:6px;color:var(--color-text-secondary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* SECTION HEADER */
+  .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .sec-hdr h2{font-size:15px;font-weight:500}
+
+  /* ONBOARDING */
+  .onboard{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;border-radius:var(--border-radius-lg);z-index:200}
+  .onboard-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:28px;width:380px}
+  .step-dots{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
+  .sdot{width:8px;height:8px;border-radius:50%;background:var(--color-border-secondary);transition:background .2s}
+  .sdot.on{background:var(--blue)}
+</style>
+</head>
+<body>
+<div id="root">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sb-logo">
+      <div class="brand">NFS<span>e</span> Sync</div>
+      <div class="sub">v2.2 · Desktop</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-sec">Principal</div>
+      <div class="sb-item active" onclick="nav('dashboard',this)"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Dashboard</div>
+      <div class="sb-item" onclick="nav('certs',this)"><i class="ti ti-certificate" aria-hidden="true"></i>Certificados</div>
+      <div class="sb-item" onclick="nav('syncs',this)"><i class="ti ti-history" aria-hidden="true"></i>Sincronizações</div>
+      <div class="sb-sec">Ferramentas</div>
+      <div class="sb-item" onclick="nav('help',this)"><i class="ti ti-help-circle" aria-hidden="true"></i>Ajuda / Guia</div>
+      <div class="sb-item" onclick="nav('config',this)"><i class="ti ti-settings" aria-hidden="true"></i>Configurações</div>
+    </nav>
+    <div class="sb-tray"><i class="ti ti-circle-filled" aria-hidden="true"></i><span>System Tray ativo</span></div>
+  </aside>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div class="topbar">
+      <span class="topbar-title" id="tt">Dashboard</span>
+      <span class="topbar-sep">·</span>
+      <span class="topbar-sub" id="ts">Visão geral</span>
+      <div class="topbar-right">
+        <button class="btn sm" onclick="showOnboard()"><i class="ti ti-player-play" aria-hidden="true"></i>Onboarding</button>
+      </div>
+    </div>
+
+    <div class="content" id="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="metric-grid">
+          <div class="metric"><div class="val">8</div><div class="lbl">Certificados</div><div class="chg" style="color:var(--green)">✓ 6 ativos</div></div>
+          <div class="metric"><div class="val">4.892</div><div class="lbl">Documentos</div><div class="chg" style="color:var(--color-text-tertiary)">+127 hoje</div></div>
+          <div class="metric"><div class="val">R$ 23.440</div><div class="lbl">Total retido</div><div class="chg" style="color:var(--color-text-tertiary)">última competência</div></div>
+          <div class="metric"><div class="val" id="last-sync">Hoje 09:14</div><div class="lbl">Última sincronização</div><div class="chg" style="color:var(--green)">✓ Sucesso</div></div>
+        </div>
+
+        <div id="queue-panel">
+          <div class="queue-info"><i class="ti ti-refresh spin" aria-hidden="true"></i><span id="queue-status-text">Empresa atual: <strong>EMPRESA XYZ LTDA</strong> · NSU: 15.482 · Documentos: 250</span></div>
+          <div class="progress-bar-wrap"><div class="progress-bar" id="prog-bar" style="width:0%"></div></div>
+          <div class="queue-list" id="queue-list"></div>
+          <div style="text-align:right;margin-top:10px"><button class="btn sm danger" onclick="stopSync()"><i class="ti ti-player-stop" aria-hidden="true"></i>Interromper</button></div>
+        </div>
+
+        <div class="sync-hero" id="sync-hero">
+          <p>Todas as empresas sincronizadas. Próxima sincronização automática em <strong>6h 42min</strong>.</p>
+          <button class="btn-sync" onclick="openSyncModal()"><i class="ti ti-refresh" aria-hidden="true"></i>Sincronizar Agora</button>
+        </div>
+      </div>
+
+      <!-- CERTIFICADOS -->
+      <div class="page" id="page-certs">
+        <div class="sec-hdr">
+          <h2>Certificados</h2>
+          <button class="btn primary" onclick="showModal('modal-add-cert')"><i class="ti ti-plus" aria-hidden="true"></i>Adicionar Certificado</button>
+        </div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Empresa</th><th>CNPJ</th><th>Último NSU</th><th>Validade</th><th>Auto</th><th>Status</th><th></th></tr></thead>
+              <tbody id="cert-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SINCRONIZAÇÕES -->
+      <div class="page" id="page-syncs">
+        <div class="sec-hdr"><h2>Histórico de Sincronizações</h2></div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Data</th><th>Empresa</th><th>Documentos</th><th>Retenções</th><th>NSU</th><th>Status</th></tr></thead>
+              <tbody id="sync-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- AJUDA -->
+      <div class="page" id="page-help">
+        <div class="sec-hdr"><h2>Ajuda e Guia do Usuário</h2></div>
+        <div class="help-section">
+          <div class="help-card"><h3><i class="ti ti-topology-star" aria-hidden="true"></i>Como funciona</h3><p>O app consulta a Sefaz pelo NSU mais recente, baixa lotes de até 500 notas, valida, grava no banco local e organiza os arquivos por competência automaticamente.</p></div>
+          <div class="help-card"><h3><i class="ti ti-folder-open" aria-hidden="true"></i>Onde ficam os arquivos</h3><p>Todos os XMLs ficam em <code style="font-family:var(--font-mono);font-size:11px">[Pasta Base]/NFSENacional/[CNPJ]/AAAA-MM/</code>. Subpastas: Emitidas, Recebidas, Eventos, Retenções.</p><button class="btn sm" style="margin-top:8px"><i class="ti ti-folder" aria-hidden="true"></i>Abrir pasta</button></div>
+          <div class="help-card"><h3><i class="ti ti-file-spreadsheet" aria-hidden="true"></i>Relatórios gerados</h3><p>Para cada competência com retenção, são gerados automaticamente <strong>PDF</strong> e <strong>XLSX</strong> na pasta <code style="font-family:var(--font-mono);font-size:11px">Retencoes/</code>.</p></div>
+          <div class="help-card"><h3><i class="ti ti-clock" aria-hidden="true"></i>Barra de sincronização</h3><p>Mostra a empresa atual, o NSU sendo processado e o total de documentos salvos. Rate limit da Sefaz exibe mensagem de aguardo automático.</p></div>
+        </div>
+        <div class="card">
+          <div class="sec-hdr" style="margin-bottom:10px"><h2 style="font-size:13px">Glossário</h2></div>
+          <div class="glossary-item"><span class="term">PFX / .p12</span><span style="color:var(--color-text-secondary)">Arquivo do certificado digital A1 contendo chave privada e certificado criptografados por senha.</span></div>
+          <div class="glossary-item"><span class="term">NSU</span><span style="color:var(--color-text-secondary)">Número Sequencial Único. Identificador incremental da Sefaz para cada evento vinculado ao seu CNPJ.</span></div>
+          <div class="glossary-item"><span class="term">mTLS</span><span style="color:var(--color-text-secondary)">TLS mútuo. A Sefaz exige autenticação via certificado digital nos dois lados da conexão HTTPS.</span></div>
+          <div class="glossary-item"><span class="term">Retenção</span><span style="color:var(--color-text-secondary)">Imposto (ISS, IRRF, PIS, COFINS, CSLL, INSS) retido na fonte pelo tomador do serviço.</span></div>
+          <div class="glossary-item"><span class="term">HTTP 429</span><span style="color:var(--color-text-secondary)">Rate limit da Sefaz. O app aguarda o header Retry-After e exibe mensagem de espera na tela.</span></div>
+        </div>
+        <div style="margin-top:12px;display:flex;justify-content:flex-end">
+          <button class="btn sm"><i class="ti ti-copy" aria-hidden="true"></i>Copiar log de erros</button>
+        </div>
+      </div>
+
+      <!-- CONFIG -->
+      <div class="page" id="page-config">
+        <div class="sec-hdr"><h2>Configurações</h2></div>
+        <div class="card" style="margin-bottom:12px">
+          <div class="setting-row">
+            <div><div class="setting-label">Pasta base</div><div class="setting-desc">Local onde XMLs, PDFs e XLSX serão salvos</div></div>
+            <div class="path-field"><span class="path-val">C:\Contabilidade\NFSe</span><button class="btn sm"><i class="ti ti-edit" aria-hidden="true"></i>Alterar</button></div>
+          </div>
+          <div class="setting-row">
+            <div><div class="setting-label">Intervalo de sincronização automática</div><div class="setting-desc">Frequência do daemon CRON em background</div></div>
+            <select style="font-size:12px;padding:5px 8px;border:0.5px solid var(--color-border-secondary);border-radius:8px;background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans)"><option>A cada 6 horas</option><option>A cada 12 horas</option><option selected>A cada 24 horas</option></select>
+          </div>
+          <div class="setting-row">
+            <div><div class="setting-label">Delay entre lotes Sefaz</div><div class="setting-desc">Throttling mínimo entre requisições</div></div>
+            <select style="font-size:12px;padding:5px 8px;border:0.5px solid var(--color-border-secondary);border-radius:8px;background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans)"><option>1.5 s</option><option selected>2.0 s</option><option>3.0 s</option></select>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec-hdr" style="margin-bottom:12px"><h2 style="font-size:13px">Banco de dados</h2></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn sm"><i class="ti ti-download" aria-hidden="true"></i>Exportar backup .sqlite</button>
+            <button class="btn sm"><i class="ti ti-upload" aria-hidden="true"></i>Importar backup</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal-bg" id="modal-select-sync" style="display:none" onclick="if(event.target===this)hideModal('modal-select-sync')">
+    <div class="modal" style="width:480px">
+      <div class="modal-title">Selecionar Empresas<button onclick="hideModal('modal-select-sync')">×</button></div>
+      <div style="margin-bottom:12px;display:flex;gap:8px">
+        <input type="text" placeholder="Buscar por Razão Social ou CNPJ..." style="flex:1">
+      </div>
+      <div style="max-height:250px;overflow-y:auto;border:0.5px solid var(--color-border-tertiary);border-radius:8px">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead style="background:var(--color-background-secondary);position:sticky;top:0;z-index:10">
+            <tr>
+              <th style="padding:10px;width:30px"><input type="checkbox" style="cursor:pointer" checked></th>
+              <th style="padding:10px">Empresa</th>
+              <th style="padding:10px;text-align:right">Status</th>
+            </tr>
+          </thead>
+          <tbody id="sync-select-tbody">
+            <!-- Render via JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer" style="margin-top:16px">
+        <button class="btn sm" onclick="hideModal('modal-select-sync')">Cancelar</button>
+        <button class="btn sm primary" onclick="confirmStartSync()"><i class="ti ti-player-play" aria-hidden="true"></i> Iniciar Sincronização</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modal-add-cert" style="display:none" onclick="if(event.target===this)hideModal('modal-add-cert')">
+    <div class="modal">
+      <div class="modal-title">Adicionar Certificado<button onclick="hideModal('modal-add-cert')">×</button></div>
+      <div class="upload-zone" onclick="fakePfx()"><i class="ti ti-upload" aria-hidden="true"></i> Clique para selecionar arquivo <strong>.pfx</strong><br><span id="pfx-name" style="color:var(--blue);margin-top:4px;display:block"></span></div>
+      <label class="field">Senha do certificado</label>
+      <input type="password" placeholder="••••••••" id="cert-pass">
+      <div id="cert-read" style="display:none;margin-top:10px;background:var(--color-background-secondary);border-radius:8px;padding:10px;font-size:12px">
+        <div style="color:var(--color-text-secondary)">Lendo certificado...</div>
+        <div id="cert-info" style="margin-top:6px;display:none">
+          <div style="font-weight:500">EMPRESA DEMO LTDA</div>
+          <div style="color:var(--color-text-tertiary);font-family:var(--font-mono);font-size:11px">CNPJ: 00.000.000/0001-00 · Validade: 30/06/2026</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn sm" onclick="hideModal('modal-add-cert')">Cancelar</button>
+        <button class="btn sm primary" onclick="saveCert()"><i class="ti ti-check" aria-hidden="true"></i>Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modal-edit-cert" style="display:none" onclick="if(event.target===this)hideModal('modal-edit-cert')">
+    <div class="modal">
+      <div class="modal-title">Editar Empresa<button onclick="hideModal('modal-edit-cert')">×</button></div>
+      <div style="font-size:14px;font-weight:500;margin-bottom:2px">EMPRESA XYZ LTDA</div>
+      <div style="font-size:11px;font-family:var(--font-mono);color:var(--color-text-tertiary);margin-bottom:14px">CNPJ: 12.345.678/0001-90</div>
+      
+      <div class="upload-zone" onclick="fakePfx()"><i class="ti ti-upload" aria-hidden="true"></i> Atualizar arquivo <strong>.pfx</strong> (se expirado)</div>
+      <label class="field">Atualizar Senha</label>
+      <input type="password" placeholder="••••••••">
+      
+      <div style="margin-top:20px;border-top:1px dashed var(--color-border-tertiary);padding-top:16px">
+        <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px"><strong>Zona de Perigo:</strong> O sistema irá ignorar o NSU atual e refazer a varredura desde a fundação da empresa. Pode levar horas.</div>
+        <button class="btn sm danger" style="width:100%;justify-content:center"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Reprocessar NSU do Zero</button>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn sm" onclick="hideModal('modal-edit-cert')">Cancelar</button>
+        <button class="btn sm primary" onclick="hideModal('modal-edit-cert')"><i class="ti ti-check" aria-hidden="true"></i>Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ONBOARD -->
+<div class="onboard" id="onboard" style="display:none">
+  <div class="onboard-card">
+    <div class="step-dots"><div class="sdot on" id="sd0"></div><div class="sdot" id="sd1"></div><div class="sdot" id="sd2"></div></div>
+    <div id="ob-step0">
+      <h2 style="font-size:17px;font-weight:500;margin-bottom:8px">Bem-vindo ao NFSe Sync</h2>
+      <p style="font-size:13px;color:var(--color-text-secondary);line-height:1.6;margin-bottom:16px">Configure em 3 passos e comece a baixar suas notas automaticamente.</p>
+      <label class="field">Pasta base para armazenar os documentos</label>
+      <div class="path-field" style="margin-top:6px"><span class="path-val">C:\Contabilidade\NFSe</span><button class="btn sm"><i class="ti ti-folder" aria-hidden="true"></i>Alterar</button></div>
+    </div>
+    <div id="ob-step1" style="display:none">
+      <h2 style="font-size:17px;font-weight:500;margin-bottom:8px">Adicionar certificado</h2>
+      <p style="font-size:13px;color:var(--color-text-secondary);line-height:1.6;margin-bottom:12px">Precisamos do arquivo .pfx da empresa para autenticar na Sefaz.</p>
+      <div class="upload-zone"><i class="ti ti-upload" aria-hidden="true"></i> Selecionar .pfx</div>
+    </div>
+    <div id="ob-step2" style="display:none;text-align:center;padding:8px 0">
+      <div style="font-size:36px;margin-bottom:12px">✓</div>
+      <h2 style="font-size:17px;font-weight:500;margin-bottom:8px">Tudo pronto!</h2>
+      <p style="font-size:13px;color:var(--color-text-secondary);line-height:1.6">Configuração concluída. O app irá sincronizar automaticamente no intervalo definido.</p>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:20px">
+      <button class="btn sm" onclick="obPrev()" id="ob-prev" style="visibility:hidden">← Anterior</button>
+      <button class="btn sm primary" onclick="obNext()" id="ob-next">Próximo →</button>
+    </div>
+  </div>
+</div>
+<script>
+const certs=[
+  {empresa:"EMPRESA XYZ LTDA",cnpj:"12.345.678/0001-90",nsu:"15.482",val:"2025-12-01",auto:true,status:"ok"},
+  {empresa:"CONSULTORIA ABC",cnpj:"98.765.432/0001-10",nsu:"4.291",val:"2026-06-30",auto:true,status:"ok"},
+  {empresa:"HOLDING GROUP SA",cnpj:"11.222.333/0001-44",nsu:"8.012",val:"2024-12-01",auto:false,status:"expired"},
+  {empresa:"LOJAS DELTA LTDA",cnpj:"44.555.666/0001-77",nsu:"2.150",val:"2025-09-15",auto:true,status:"warn"},
+  {empresa:"TECH SOLUÇÕES ME",cnpj:"77.888.999/0001-22",nsu:"610",val:"2026-03-20",auto:false,status:"ok"},
+];
+const syncs=[
+  {date:"hoje 09:14",empresa:"EMPRESA XYZ LTDA",docs:127,ret:3,nsu:"15.482",status:"ok"},
+  {date:"hoje 03:00",empresa:"CONSULTORIA ABC",docs:44,ret:0,nsu:"4.291",status:"ok"},
+  {date:"ontem 22:30",empresa:"LOJAS DELTA LTDA",docs:0,ret:0,nsu:"2.150",status:"err"},
+  {date:"ontem 09:00",empresa:"EMPRESA XYZ LTDA",docs:88,ret:7,nsu:"15.355",status:"ok"},
+  {date:"19/06 14:22",empresa:"TECH SOLUÇÕES ME",docs:15,ret:1,nsu:"610",status:"ok"},
+  {date:"18/06 09:01",empresa:"CONSULTORIA ABC",docs:62,ret:2,nsu:"4.247",status:"ok"},
+];
+
+function renderCerts(){
+  const tbody=document.getElementById('cert-tbody');
+  tbody.innerHTML=certs.map(c=>{
+    const exp=c.status==='expired',warn=c.status==='warn';
+    return`<tr>
+      <td style="font-weight:500">${c.empresa}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${c.cnpj}</td>
+      <td style="font-family:var(--font-mono)">${c.nsu}</td>
+      <td>${exp?`<span class="badge err">${c.val} · Expirado</span>`:warn?`<span class="badge warn">${c.val}</span>`:`<span style="font-size:12px;color:var(--color-text-secondary)">${c.val}</span>`}</td>
+      <td><label class="tog" title="Sincronização automática"><input type="checkbox" ${c.auto&&!exp?'checked':''} ${exp?'disabled':''}><div class="tog-track"></div><div class="tog-thumb"></div></label></td>
+      <td>${exp?'<span class="badge err">Expirado</span>':warn?'<span class="badge warn">Vence em breve</span>':'<span class="badge ok">Ativo</span>'}</td>
+      <td style="white-space:nowrap"><button class="btn sm" style="margin-right:4px" title="Editar" onclick="showModal('modal-edit-cert')"><i class="ti ti-edit" aria-hidden="true"></i></button><button class="btn sm" title="Excluir"><i class="ti ti-trash" aria-hidden="true"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSyncs(){
+  const tbody=document.getElementById('sync-tbody');
+  tbody.innerHTML=syncs.map(s=>{
+    const b=s.status==='ok'?'ok':'err';
+    const label=s.status==='ok'?'Sucesso':'Erro';
+    return`<tr>
+      <td style="font-size:11px;font-family:var(--font-mono);color:var(--color-text-secondary)">${s.date}</td>
+      <td style="font-weight:500">${s.empresa}</td>
+      <td>${s.docs>0?s.docs:'<span style="color:var(--color-text-tertiary)">—</span>'}</td>
+      <td>${s.ret>0?`<span class="badge warn">${s.ret}</span>`:'<span style="color:var(--color-text-tertiary)">—</span>'}</td>
+      <td style="font-family:var(--font-mono);font-size:11px">${s.nsu}</td>
+      <td><span class="dot ${b==='ok'?'green':'red'}"></span> <span class="badge ${b}">${label}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+const pages={
+  dashboard:{t:'Dashboard',s:'Visão geral'},
+  certs:{t:'Certificados',s:'Gerenciar certificados digitais'},
+  syncs:{t:'Sincronizações',s:'Histórico de operações'},
+  help:{t:'Ajuda / Guia',s:'Documentação offline e glossário'},
+  config:{t:'Configurações',s:'Pasta base, automação, backup'},
+};
+
+function nav(id,el){
+  document.querySelectorAll('.sb-item').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('tt').textContent=pages[id].t;
+  document.getElementById('ts').textContent=pages[id].s;
+}
+
+let syncInterval,syncStep=0;
+const queueData=[
+  {name:"EMPRESA XYZ LTDA",nsu:"15.482",docs:127,status:'done'},
+  {name:"CONSULTORIA ABC",nsu:"4.291",docs:44,status:'running'},
+  {name:"LOJAS DELTA LTDA",nsu:"2.150",docs:0,status:'wait'},
+  {name:"TECH SOLUÇÕES ME",nsu:"610",docs:15,status:'wait'},
+];
+
+function renderQueue(){
+  const icons={done:'<span style="color:var(--green)"><i class="ti ti-check" aria-hidden="true"></i></span>',running:'<i class="ti ti-refresh spin" aria-hidden="true" style="color:var(--blue)"></i>',wait:'<span style="color:var(--color-text-tertiary)">⏳</span>',limit:'<i class="ti ti-clock" aria-hidden="true" style="color:#B45309"></i>'};
+  document.getElementById('queue-list').innerHTML=queueData.slice(0,syncStep+2).map((q,i)=>{
+    let s=i<syncStep?'done':i===syncStep?'running':'wait';
+    if(s==='running' && isRateLimited) s='limit';
+    
+    let badgeText = s==='running'?'Processando':s==='done'?`${q.docs} docs`:s==='limit'?'Pausado: Sefaz (15s)':'Na fila';
+    let badgeClass = s==='running'?'run':s==='done'?'ok':s==='limit'?'warn':'gray';
+    let itemClass = s==='running'?'processing':s==='limit'?'limited':'';
+
+    return`<div class="q-item ${itemClass}">
+      ${icons[s]}
+      <span class="q-name">${q.name}</span>
+      <span class="q-nsu">NSU ${q.nsu}</span>
+      <span class="badge ${badgeClass}">${badgeText}</span>
+    </div>`;
+  }).join('');
+}
+
+function openSyncModal(){
+  const tbody=document.getElementById('sync-select-tbody');
+  tbody.innerHTML=certs.map(c=>{
+    const exp=c.status==='expired';
+    return`<tr>
+      <td style="padding:8px 10px;border-top:0.5px solid var(--color-border-tertiary)"><input type="checkbox" style="cursor:pointer" ${exp?'disabled':'checked'}></td>
+      <td style="padding:8px 10px;border-top:0.5px solid var(--color-border-tertiary);${exp?'opacity:0.5':''}">
+        <div style="font-weight:500">${c.empresa}</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${c.cnpj}</div>
+      </td>
+      <td style="padding:8px 10px;text-align:right;border-top:0.5px solid var(--color-border-tertiary)">
+        ${exp?'<span class="badge err">Expirado</span>':'<span class="badge ok">Pronto</span>'}
+      </td>
+    </tr>`;
+  }).join('');
+  showModal('modal-select-sync');
+}
+
+function confirmStartSync(){
+  hideModal('modal-select-sync');
+  startSync();
+}
+
+let isRateLimited = false;
+
+function startSync(){
+  syncStep=0;
+  isRateLimited=false;
+  document.getElementById('sync-hero').style.display='none';
+  document.getElementById('queue-panel').style.display='block';
+  renderQueue();
+  let p=0;
+  syncInterval=setInterval(()=>{
+    if(syncStep===1 && p===36 && !isRateLimited){
+      isRateLimited=true;
+      renderQueue();
+      setTimeout(()=>{isRateLimited=false;renderQueue();},3000); // Simula o Rate Limit de 3 segundos no UI
+    }
+    
+    if(isRateLimited) return; // Pausa o progresso
+
+    p+=2;
+    document.getElementById('prog-bar').style.width=p+'%';
+    if(p%25===0&&syncStep<3){syncStep++;renderQueue();}
+    if(p>=100){
+      clearInterval(syncInterval);
+      document.getElementById('queue-panel').style.display='none';
+      document.getElementById('sync-hero').style.display='block';
+      document.getElementById('sync-hero').querySelector('p').innerHTML='Sincronização concluída. <strong>4 empresas atualizadas · 186 documentos salvos.</strong>';
+      document.getElementById('last-sync').textContent='Agora';
+    }
+  },80);
+}
+
+function stopSync(){
+  clearInterval(syncInterval);
+  document.getElementById('queue-panel').style.display='none';
+  document.getElementById('sync-hero').style.display='block';
+}
+
+function showModal(id){document.getElementById(id).style.display='flex'}
+function hideModal(id){document.getElementById(id).style.display='none';document.getElementById('pfx-name').textContent='';document.getElementById('cert-read').style.display='none';document.getElementById('cert-info').style.display='none';}
+
+function fakePfx(){
+  document.getElementById('pfx-name').textContent='certificado_empresa.pfx ✓';
+  document.getElementById('cert-read').style.display='block';
+  setTimeout(()=>{document.getElementById('cert-info').style.display='block';},700);
+}
+
+function saveCert(){
+  hideModal('modal-add-cert');
+  certs.push({empresa:"EMPRESA DEMO LTDA",cnpj:"00.000.000/0001-00",nsu:"0",val:"2026-06-30",auto:true,status:"ok"});
+  renderCerts();
+}
+
+let obStep=0;
+function showOnboard(){document.getElementById('onboard').style.display='flex';}
+function obNext(){
+  if(obStep<2){
+    document.getElementById('ob-step'+obStep).style.display='none';
+    obStep++;
+    document.getElementById('ob-step'+obStep).style.display='block';
+    for(let i=0;i<3;i++)document.getElementById('sd'+i).className='sdot'+(i<=obStep?' on':'');
+    document.getElementById('ob-prev').style.visibility='visible';
+    if(obStep===2){document.getElementById('ob-next').textContent='Concluir';}
+  } else {document.getElementById('onboard').style.display='none';obStep=0;}
+}
+function obPrev(){
+  if(obStep>0){
+    document.getElementById('ob-step'+obStep).style.display='none';
+    obStep--;
+    document.getElementById('ob-step'+obStep).style.display='block';
+    for(let i=0;i<3;i++)document.getElementById('sd'+i).className='sdot'+(i<=obStep?' on':'');
+    if(obStep===0)document.getElementById('ob-prev').style.visibility='hidden';
+    document.getElementById('ob-next').textContent='Próximo →';
+  }
+}
+
+renderCerts();
+renderSyncs();
+</script>
+</body>
+</html>
