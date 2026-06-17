@@ -15,6 +15,12 @@ body {
   color: #111827;
 }
 
+.dark body,
+.dark {
+  background-color: #111827;
+  color: #F9FAFB;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -39,8 +45,16 @@ body {
   border-radius: 3px;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: #4B5563;
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: #9CA3AF;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
 }
 
 /* Toggle switch */
@@ -49,4 +63,13 @@ body {
 }
 .tog input:checked ~ .tog-thumb {
   transform: translateX(13px);
+}
+
+@keyframes slide-in {
+  0% { transform: translateX(100%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+.toast-enter {
+  animation: slide-in 0.3s ease-out;
 }

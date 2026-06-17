@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./src/**/*.{js,ts,jsx,tsx}', './electron/**/*.{js,ts}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -12,15 +13,18 @@ export default {
         },
         green: {
           DEFAULT: '#10B981',
-          light: '#D1FAE5'
+          light: '#D1FAE5',
+          dark: '#059669'
         },
         red: {
           DEFAULT: '#EF4444',
-          light: '#FEE2E2'
+          light: '#FEE2E2',
+          dark: '#DC2626'
         },
         amber: {
           DEFAULT: '#F59E0B',
-          light: '#FEF3C7'
+          light: '#FEF3C7',
+          dark: '#D97706'
         },
         gray: {
           50: '#F9FAFB',
@@ -54,6 +58,15 @@ export default {
       },
       width: {
         'sidebar': '240px'
+      },
+      keyframes: {
+        'slide-in': {
+          '0%': { transform: 'translateX(100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' }
+        }
+      },
+      animation: {
+        'slide-in': 'slide-in 0.3s ease-out'
       }
     }
   },
