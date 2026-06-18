@@ -35,3 +35,6 @@ logs
 # Testing
 coverage/
 reports/
+
+# Backup local
+electron-backup-*/
