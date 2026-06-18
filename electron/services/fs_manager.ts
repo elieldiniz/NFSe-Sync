@@ -1,18 +1,17 @@
 import fs from 'fs'
 import path from 'path'
 import { DocumentoParsed, EventoCancelamento } from './parser'
+import { ensureDir } from '../utils/ensure-dir'
 
-// RN006-RN008: File system organizer
 export function getDocumentPath(
   pastaBase: string,
   cnpjCertificado: string,
   razaoSocial: string,
   doc: DocumentoParsed
 ): string {
-  const competencia = doc.competencia // AAAA-MM
+  const competencia = doc.competencia
   const empresaDir = `${cnpjCertificado} - ${razaoSocial}`
 
-  // RN006/RN007: Classify by CNPJ comparison
   let subpasta = 'Emitidas'
   if (doc.tipo === 'EVENTO') {
     subpasta = 'Eventos'
@@ -26,7 +25,6 @@ export function getDocumentPath(
   return path.join(pastaBase, 'NFSENacional', empresaDir, competencia, subpasta, fileName)
 }
 
-// Get retention copy path
 export function getRetencaoPath(
   pastaBase: string,
   cnpjCertificado: string,
@@ -39,7 +37,6 @@ export function getRetencaoPath(
   return path.join(pastaBase, 'NFSENacional', empresaDir, competencia, 'Retencoes', 'XML', fileName)
 }
 
-// Get event path for cancellation XMLs
 export function getEventoPath(
   pastaBase: string,
   cnpjCertificado: string,
@@ -52,21 +49,11 @@ export function getEventoPath(
   return path.join(pastaBase, 'NFSENacional', empresaDir, competencia, 'Eventos', fileName)
 }
 
-// Ensure directory exists recursively
-export function ensureDir(filePath: string): void {
-  const dir = path.dirname(filePath)
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
-  }
-}
-
-// Write XML file with directory creation
 export function writeXmlFile(filePath: string, xmlContent: string): void {
   ensureDir(filePath)
   fs.writeFileSync(filePath, xmlContent, 'utf-8')
 }
 
-// Delete file if exists
 export function deleteFileIfExists(filePath: string): void {
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath)
