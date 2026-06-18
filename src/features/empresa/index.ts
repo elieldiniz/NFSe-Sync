@@ -1,0 +1,1 @@
+export { EmpresaDashboard } from './EmpresaDashboard'

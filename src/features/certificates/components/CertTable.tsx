@@ -1,5 +1,6 @@
 import { memo } from 'react'
-import { IconEdit, IconTrash } from '@tabler/icons-react'
+import { useNavigate } from 'react-router-dom'
+import { IconEdit, IconTrash, IconChartBar } from '@tabler/icons-react'
 import { Card } from '@/shared/components'
 import { CertStatusBadge, CertDateBadge } from './CertStatusBadge'
 import type { Certificado } from '@/types'
@@ -11,6 +12,8 @@ interface CertTableProps {
 }
 
 export const CertTable = memo(function CertTable({ certs, onEdit, onDelete }: CertTableProps): React.JSX.Element {
+  const navigate = useNavigate()
+
   return (
     <Card>
       <div className="tbl-wrap overflow-x-auto">
@@ -48,6 +51,13 @@ export const CertTable = memo(function CertTable({ certs, onEdit, onDelete }: Ce
                     <CertStatusBadge cert={cert} />
                   </td>
                   <td className="py-2 px-2.5 border-b border-gray-200 dark:border-gray-700 whitespace-nowrap">
+                    <button
+                      onClick={() => navigate(`/empresa/${cert.id}`)}
+                      className="btn sm text-[12px] py-1 px-2 rounded-md border border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 cursor-pointer inline-flex items-center hover:bg-blue-100 dark:hover:bg-blue-900/40 mr-1"
+                      title="Dashboard da Empresa"
+                    >
+                      <IconChartBar size={14} />
+                    </button>
                     <button
                       onClick={() => onEdit(cert)}
                       className="btn sm text-[12px] py-1 px-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 cursor-pointer inline-flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 mr-1"
