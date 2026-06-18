@@ -58,6 +58,14 @@ const api = {
   generateRetencoesReport: (certificadoId: string, competencia: string) =>
     ipcRenderer.invoke('generate-retencoes-report', certificadoId, competencia),
   openReport: (filePath: string) => ipcRenderer.invoke('report:open', filePath),
+  generateReportManual: (certificadoId: string, competencia: string) =>
+    ipcRenderer.invoke('generate-report-manual', certificadoId, competencia),
+  getCompetencias: (certificadoId: string) =>
+    ipcRenderer.invoke('get-competencias', certificadoId),
+  getStatsEmpresa: (certificadoId: string) =>
+    ipcRenderer.invoke('get-stats-empresa', certificadoId),
+  getRetencoesEmpresa: (certificadoId: string) =>
+    ipcRenderer.invoke('get-retencoes-empresa', certificadoId),
 
   // Stats
   getStats: () => ipcRenderer.invoke('get-stats'),
