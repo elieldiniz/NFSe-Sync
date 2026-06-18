@@ -237,20 +237,22 @@ export function parseDocumento(item: {
   const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: true })
   const parsed = parser.parse(xmlString)
 
-  const root = parsed?.NFe?.infNFe || parsed?.infNFe || parsed?.['NFS-e'] || parsed?.infNFS || parsed
+  const root = parsed?.NFSe?.infNFSe || parsed?.NFe?.infNFe || parsed?.infNFe || parsed
 
   // Extract fields with multiple path attempts
-  const ide = root?.ide || root?.infNFe?.ide || root?.infNFS?.ide || {}
-  const emit = root?.emit || root?.infNFe?.emit || root?.infNFS?.emit || {}
-  const dest = root?.dest || root?.infNFe?.dest || root?.infNFS?.dest || {}
-  const total = root?.total || root?.infNFe?.total || root?.infNFS?.total || {}
+  const ide = root?.ide || root?.infNFe?.ide || {}
+  const emit = root?.emit || root?.infNFe?.emit || {}
+  const dest = root?.dest || root?.infNFe?.dest || {}
+  const total = root?.total || root?.infNFe?.total || {}
+  const valores = root?.valores || {}
+  const dps = root?.DPS?.infDPS?.valores?.vServPrest || {}
 
   // Determine type based on CNPJ comparison
   const cnpjEmitente = emit?.CNPJ || ''
   const cnpjTomador = dest?.CNPJ || ''
 
   // Parse competencia from emission date
-  const dataEmissao = ide?.dhEmi || ide?.dhRecbto || item.DataHoraGeracao
+  const dataEmissao = ide?.dhEmi || ide?.dhRecbto || root?.DPS?.infDPS?.dhEmi || item.DataHoraGeracao
   const competencia = dataEmissao ? dataEmissao.substring(0, 7) : ''
 
   // Parse retentions
@@ -262,25 +264,14 @@ export function parseDocumento(item: {
     valorTotal = parseFloat(total.ICMSTot.vNF) || 0
   } else if (total?.vNF) {
     valorTotal = parseFloat(total.vNF) || 0
+  } else if (valores?.vBC) {
+    valorTotal = parseFloat(valores.vBC) || 0
+  } else if (dps?.vServ) {
+    valorTotal = parseFloat(dps.vServ) || 0
   } else if (root?.valorServicos) {
     valorTotal = parseFloat(root.valorServicos) || 0
   } else if (root?.valorTotalServicos) {
     valorTotal = parseFloat(root.valorTotalServicos) || 0
-  } else if (root?.infNFS?.valorServicos) {
-    valorTotal = parseFloat(root.infNFS.valorServicos) || 0
-  } else if (root?.['NFS-e']?.infNFS?.valorServicos) {
-    valorTotal = parseFloat(root['NFS-e'].infNFS.valorServicos) || 0
-  } else if (root?.infNFe?.total?.ICMSTot?.vNF) {
-    valorTotal = parseFloat(root.infNFe.total.ICMSTot.vNF) || 0
-  }
-
-  // Debug: log the parsed structure to help identify correct path
-  console.log('[parser] parsed keys:', Object.keys(parsed || {}))
-  console.log('[parser] root keys:', Object.keys(root || {}))
-  console.log('[parser] total keys:', Object.keys(total || {}))
-  console.log('[parser] valorTotal:', valorTotal)
-  if (valorTotal === 0) {
-    console.log('[parser] DEBUG: full root:', JSON.stringify(root, null, 2).substring(0, 500))
   }
 
   return {
