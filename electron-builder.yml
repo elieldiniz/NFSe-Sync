@@ -37,6 +37,8 @@ linux:
         - x64
   icon: resources/icon.png
   category: Office
+  executableArgs:
+    - --disable-gpu
 
 mac:
   target:
