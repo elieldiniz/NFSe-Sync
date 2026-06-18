@@ -20,55 +20,230 @@ Aplicativo desktop para automacao de download e organizacao de NFS-e (Nota Fisca
 
 ## Como Instalar
 
-### Opcao 1: AppImage (Linux)
+### Requisitos Previos
 
-1. **Baixe o arquivo** `NFSe Sync Desktop-2.2.0.AppImage`
+- **Node.js** v18 ou superior: https://nodejs.org
+- **npm** (vem junto com o Node.js)
+- **Git**: https://git-scm.com
 
-2. **Torne executavel:**
-   ```bash
-   chmod +x "NFSe Sync Desktop-2.2.0.AppImage"
+---
+
+### Linux (Ubuntu/Debian)
+
+#### Instalar Dependencias do Sistema
+
+```bash
+# Atualizar repositorios
+sudo apt update
+
+# Instalar Node.js e npm
+sudo apt install -y nodejs npm
+
+# Instalar dependencias para Electron
+sudo apt install -y libgtk-3-0 libnotify4 libnss3 libxss1 libxtst6 xdg-utils libatspi2.0-0 libuuid1 libsecret-1-0
+
+# Instalar dependencias para compilar nativos
+sudo apt install -y build-essential python3
+```
+
+#### Compilar e Instalar
+
+```bash
+# Clonar o repositorio
+git clone https://github.com/seu-usuario/nfse-sync-desktop.git
+cd nfse-sync-desktop
+
+# Instalar dependencias do projeto
+npm install
+
+# Compilar e gerar instaladores
+npm run build:linux
+```
+
+#### Instalar o AppImage
+
+```bash
+# Navegar ate a pasta release
+cd release
+
+# Tornar o AppImage executavel
+chmod +x "NFSe Sync Desktop-2.2.0.AppImage"
+
+# Executar
+./"NFSe Sync Desktop-2.2.0.AppImage"
+```
+
+#### Instalar o Pacote .deb
+
+```bash
+# Navegar ate a pasta release
+cd release
+
+# Instalar o pacote
+sudo dpkg -i nfse-sync-desktop_2.2.0_amd64.deb
+
+# Corrigir dependencias (se necessario)
+sudo apt-get install -f
+
+# Executar
+nfse-sync-desktop
+```
+
+#### Criar Atalho no Menu
+
+Crie um arquivo `.desktop` em `/usr/share/applications/`:
+
+```bash
+sudo nano /usr/share/applications/nfse-sync-desktop.desktop
+```
+
+Cole o conteudo:
+
+```ini
+[Desktop Entry]
+Name=NFSe Sync Desktop
+Comment=Automacao de download e organizacao de NFS-e
+Exec=/home/seu-usuario/nfse-sync-desktop/release/linux-unpacked/nfse-sync-desktop
+Icon=/home/seu-usuario/nfse-sync-desktop/resources/icon.png
+Type=Application
+Categories=Office;
+Terminal=false
+```
+
+Salve e saia (Ctrl+O, Enter, Ctrl+X).
+
+---
+
+### Windows
+
+#### Instalar Dependencias do Sistema
+
+1. **Baixe e instale o Node.js:** https://nodejs.org
+   - Selecione a versao LTS
+   - Marque a opcao "Automatically install the necessary tools"
+
+2. **Instale o Git:** https://git-scm.com
+
+3. **Instale o Visual C++ Build Tools** (opcional, para pacotes nativos):
+   ```powershell
+   # No PowerShell como administrador
+   npm install -g windows-build-tools
    ```
 
-3. **Execute:**
-   ```bash
-   ./NFSe\ Sync\ Desktop-2.2.0.AppImage
-   ```
+#### Compilar e Instalar
 
-4. **(Opcional) Instalar no sistema:**
-   - Clique com o botao direito no arquivo
-   - Selecione "Integrar ao sistema" (depende da distribuicao)
+```powershell
+# Abrir PowerShell ou CMD
 
-### Opcao 2: Compilar do Codigo
+# Clonar o repositorio
+git clone https://github.com/seu-usuario/nfse-sync-desktop.git
+cd nfse-sync-desktop
 
-1. **Clone o repositorio:**
-   ```bash
-   git clone https://github.com/seu-usuario/nfse-sync-desktop.git
-   cd nfse-sync-desktop
-   ```
+# Instalar dependencias do projeto
+npm install
 
-2. **Instale as dependencias:**
-   ```bash
-   npm install
-   ```
+# Compilar e gerar instalador
+npm run build:win
+```
 
-3. **Compile o aplicativo:**
-   ```bash
-   npm run build
-   ```
+#### Instalar o Aplicativo
 
-4. **Gere o instalador:**
-   ```bash
-   # Para Linux
-   npm run build:linux
+1. Navegue ate a pasta `release`
+2. Execute o arquivo `NFSe Sync Desktop Setup 2.2.0.exe`
+3. Siga o assistente de instalacao
+4. O app sera instalado em `C:\Program Files\NFSe Sync Desktop\`
 
-   # Para Windows
-   npm run build:win
+#### Criar Atalho na Area de Trabalho
 
-   # Para Mac
-   npm run build:mac
-   ```
+1. Navegue ate `C:\Program Files\NFSe Sync Desktop\`
+2. Clique com o botao direito em `nfse-sync-desktop.exe`
+3. Selecione **"Enviar para"** > **"Area de trabalho (criar atalho)"**
 
-5. **O instalador sera gerado na pasta `release/`**
+---
+
+### Mac
+
+#### Instalar Dependencias do Sistema
+
+```bash
+# Instalar Homebrew (se nao tiver)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Instalar Node.js
+brew install node
+
+# Instalar Git
+brew install git
+```
+
+#### Compilar e Instalar
+
+```bash
+# Clonar o repositorio
+git clone https://github.com/seu-usuario/nfse-sync-desktop.git
+cd nfse-sync-desktop
+
+# Instalar dependencias do projeto
+npm install
+
+# Compilar e gerar DMG
+npm run build:mac
+```
+
+#### Instalar o Aplicativo
+
+1. Navegue ate a pasta `release`
+2. Abra o arquivo `NFSe Sync Desktop-2.2.0.dmg`
+3. Arraste o app para a pasta `Applications`
+4. Abra o app pelo Launchpad ou Spotlight
+
+---
+
+### Resumo dos Comandos
+
+| Sistema | Comando para Compilar | Arquivo Gerado |
+|---------|----------------------|----------------|
+| Linux | `npm run build:linux` | `NFSe Sync Desktop-2.2.0.AppImage` |
+| Linux | `npm run build:linux` | `nfse-sync-desktop_2.2.0_amd64.deb` |
+| Windows | `npm run build:win` | `NFSe Sync Desktop Setup 2.2.0.exe` |
+| Mac | `npm run build:mac` | `NFSe Sync Desktop-2.2.0.dmg` |
+
+---
+
+### Solucao de Problemas
+
+#### Erro: "libXss.so.1: cannot open shared object file" (Linux)
+
+```bash
+sudo apt install -y libxss1
+```
+
+#### Erro: "better-sqlite3" falha ao compilar (Linux)
+
+```bash
+sudo apt install -y build-essential python3
+npm rebuild better-sqlite3
+```
+
+#### Erro: "Electron" nao inicia (Windows)
+
+1. Instale o Visual C++ Build Tools
+2. Reinicie o computador
+3. Execute `npm rebuild` no projeto
+
+#### Erro: "Permissao negada" ao executar AppImage (Linux)
+
+```bash
+chmod +x "NFSe Sync Desktop-2.2.0.AppImage"
+```
+
+#### Erro: "Module not found" apos clonar
+
+```bash
+# Limpar cache e reinstalar
+rm -rf node_modules package-lock.json
+npm install
+```
 
 ---
 
