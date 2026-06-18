@@ -8,6 +8,7 @@ directories:
 files:
   - out/**/*
   - package.json
+  - resources/**/*
 
 win:
   target:
@@ -34,7 +35,7 @@ linux:
     - target: deb
       arch:
         - x64
-  icon: resources
+  icon: resources/icon.png
   category: Office
 
 mac:
