@@ -105,7 +105,8 @@ export function EmpresaDashboard(): React.JSX.Element {
 
   let cumulativePercent = 0
   const gradientStops = pieData.map(item => {
-    const percent = (item.value / totalRetencoes) * 100
+    const rawPercent = (item.value / totalRetencoes) * 100
+    const percent = Math.max(rawPercent, 1.5)
     const start = cumulativePercent
     cumulativePercent += percent
     return `${item.color} ${start}% ${cumulativePercent}%`
