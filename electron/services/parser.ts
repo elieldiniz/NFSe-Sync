@@ -256,6 +256,20 @@ export function parseDocumento(item: {
   // Parse retentions
   const retencoes = parseRetencoes(xmlString)
 
+  // Extract valor_total from multiple possible paths (NFe and NFS-e)
+  let valorTotal = 0
+  if (total?.ICMSTot?.vNF) {
+    valorTotal = parseFloat(total.ICMSTot.vNF) || 0
+  } else if (total?.vNF) {
+    valorTotal = parseFloat(total.vNF) || 0
+  } else if (root?.valorServicos) {
+    valorTotal = parseFloat(root.valorServicos) || 0
+  } else if (root?.valorTotalServicos) {
+    valorTotal = parseFloat(root.valorTotalServicos) || 0
+  } else if (root?.infNFe?.total?.ICMSTot?.vNF) {
+    valorTotal = parseFloat(root.infNFe.total.ICMSTot.vNF) || 0
+  }
+
   return {
     chave_documento: item.ChaveAcesso,
     numero_nota: ide?.nNF || ide?.nServ || '',
@@ -266,7 +280,7 @@ export function parseDocumento(item: {
     nome_prestador: emit?.xNome || '',
     cnpj_tomador: cnpjTomador,
     nome_tomador: dest?.xNome || '',
-    valor_total: parseFloat(total?.ICMSTot?.vNF || total?.vNF || '0') || 0,
+    valor_total: valorTotal,
     possui_retencao: !!retencoes,
     retencoes
   }
