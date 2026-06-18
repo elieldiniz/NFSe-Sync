@@ -4,6 +4,7 @@ import {
   IconLayoutDashboard,
   IconCertificate,
   IconHistory,
+  IconReport,
   IconHelpCircle,
   IconSettings,
   IconCircleFilled
@@ -19,7 +20,8 @@ const menuSections = [
     items: [
       { path: '/', label: 'Dashboard', icon: IconLayoutDashboard },
       { path: '/certs', label: 'Certificados', icon: IconCertificate },
-      { path: '/syncs', label: 'Sincronizações', icon: IconHistory }
+      { path: '/syncs', label: 'Sincronizações', icon: IconHistory },
+      { path: '/reports', label: 'Relatórios', icon: IconReport }
     ]
   },
   {
