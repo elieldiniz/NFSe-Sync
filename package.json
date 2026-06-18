@@ -2,10 +2,18 @@
   "name": "nfse-sync-desktop",
   "version": "2.2.0",
   "description": "NFSe Sync Desktop - Automação de download e organização de NFS-e",
+  "author": {
+    "name": "Eliel Diniz",
+    "email": "elieldiniz1@outlook.com"
+  },
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "build:win": "npm run build && electron-builder --win",
+    "build:linux": "npm run build && electron-builder --linux",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:all": "npm run build && electron-builder --win --linux --mac",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx",
@@ -44,6 +52,7 @@
     "@vitejs/plugin-react": "^4.3.0",
     "autoprefixer": "^10.4.20",
     "electron": "^33.0.0",
+    "electron-builder": "^26.15.3",
     "electron-vite": "^2.3.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.4.47",
