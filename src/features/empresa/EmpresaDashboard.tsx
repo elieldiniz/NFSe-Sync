@@ -103,14 +103,20 @@ export function EmpresaDashboard(): React.JSX.Element {
     { label: 'CSLL', value: retencoes?.csll || 0, color: '#6B7280' }
   ] : []
 
+  // Filtrar apenas itens com valor > 0
+  const activeItems = pieData.filter(item => item.value > 0)
+
+  // Se so tem 1 item, mostrar 100%
+  // Se tem mais, dividir proporcionalmente
   let cumulativePercent = 0
-  const gradientStops = pieData.map(item => {
-    const rawPercent = (item.value / totalRetencoes) * 100
-    const percent = Math.max(rawPercent, 1.5)
-    const start = cumulativePercent
-    cumulativePercent += percent
-    return `${item.color} ${start}% ${cumulativePercent}%`
-  })
+  const gradientStops = activeItems.length > 0
+    ? activeItems.map((item, index) => {
+        const percent = activeItems.length === 1 ? 100 : (item.value / totalRetencoes) * 100
+        const start = cumulativePercent
+        cumulativePercent += percent
+        return `${item.color} ${start}% ${cumulativePercent}%`
+      })
+    : []
   const pieGradient = gradientStops.length > 0
     ? `conic-gradient(${gradientStops.join(', ')})`
     : 'conic-gradient(#e5e7eb 0% 100%)'
