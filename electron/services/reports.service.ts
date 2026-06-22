@@ -40,23 +40,25 @@ async function gerarPdf(dados: RetencaoRow[], certificado: Certificado, competen
     let y = doc.y
     let x = startX
 
-    doc.fontSize(7).font('Helvetica-Bold')
+    doc.fontSize(6).font('Helvetica-Bold')
     headers.forEach((h, i) => {
-      doc.text(h, x, y, { width: colWidths[i], align: 'center' })
+      const align = (i <= 2) ? 'center' : (i >= 5) ? 'right' : 'left'
+      doc.text(h, x, y, { width: colWidths[i], align })
       x += colWidths[i]
     })
     y += 15
 
-    doc.font('Helvetica').fontSize(7)
+    doc.font('Helvetica').fontSize(6)
     let rowNumber = 1
     for (const row of dados) {
       x = startX
+      const trunc = (str: string | null | undefined, max: number) => str && str.length > max ? str.substring(0, max - 3) + '...' : str || '-'
       const values = [
         String(rowNumber),
-        row.numero_nota || '-',
+        trunc(row.numero_nota, 12),
         row.data_emissao ? new Date(row.data_emissao).toLocaleDateString('pt-BR') : '-',
-        row.nome_prestador || '-',
-        row.nome_tomador || '-',
+        trunc(row.nome_prestador, 28),
+        trunc(row.nome_tomador, 28),
         row.iss.toFixed(2),
         row.inss.toFixed(2),
         row.irrf.toFixed(2),
@@ -65,9 +67,10 @@ async function gerarPdf(dados: RetencaoRow[], certificado: Certificado, competen
         row.csll.toFixed(2),
         row.total_retido.toFixed(2)
       ]
+
       values.forEach((v, i) => {
-        const align = i === 0 ? 'center' : i >= 5 ? 'right' : 'left'
-        doc.text(v, x, y, { width: colWidths[i], align })
+        const align = (i <= 2) ? 'center' : (i >= 5) ? 'right' : 'left'
+        doc.text(v, x, y, { width: colWidths[i], align, lineBreak: false })
         x += colWidths[i]
       })
       y += 12
@@ -95,8 +98,8 @@ async function gerarPdf(dados: RetencaoRow[], certificado: Certificado, competen
     )
 
     x = startX
-    doc.text('TOTAL', x, y, { width: 410, align: 'right' })
-    x = 440
+    doc.text('TOTAL', x, y, { width: 355, align: 'right' })
+    x = 385
     const totalValues = [totals.iss, totals.inss, totals.irrf, totals.pis, totals.cofins, totals.csll, totals.total]
     totalValues.forEach((v, i) => {
       doc.text(v.toFixed(2), x, y, { width: colWidths[i + 5], align: 'right' })

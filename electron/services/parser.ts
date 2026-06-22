@@ -243,13 +243,14 @@ export function parseDocumento(item: {
   const ide = root?.ide || root?.infNFe?.ide || {}
   const emit = root?.emit || root?.infNFe?.emit || {}
   const dest = root?.dest || root?.infNFe?.dest || {}
+  const toma = root?.DPS?.infDPS?.toma || {}
   const total = root?.total || root?.infNFe?.total || {}
   const valores = root?.valores || {}
   const dps = root?.DPS?.infDPS?.valores?.vServPrest || {}
 
   // Determine type based on CNPJ comparison
   const cnpjEmitente = emit?.CNPJ || ''
-  const cnpjTomador = dest?.CNPJ || ''
+  const cnpjTomador = dest?.CNPJ || toma?.CNPJ || toma?.CPF || ''
 
   // Parse competencia from emission date
   const dataEmissao = ide?.dhEmi || ide?.dhRecbto || root?.DPS?.infDPS?.dhEmi || item.DataHoraGeracao
@@ -276,14 +277,14 @@ export function parseDocumento(item: {
 
   return {
     chave_documento: item.ChaveAcesso,
-    numero_nota: ide?.nNF || ide?.nServ || '',
+    numero_nota: ide?.nNF || ide?.nServ || root?.nNFSe || '',
     tipo: 'EMITIDA', // Default, will be determined by orchestrator
     data_emissao: dataEmissao || item.DataHoraGeracao,
     competencia,
     cnpj_prestador: cnpjEmitente,
     nome_prestador: emit?.xNome || '',
     cnpj_tomador: cnpjTomador,
-    nome_tomador: dest?.xNome || '',
+    nome_tomador: dest?.xNome || toma?.xNome || '',
     valor_total: valorTotal,
     possui_retencao: !!retencoes,
     retencoes

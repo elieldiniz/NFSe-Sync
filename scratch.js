@@ -1,0 +1,10 @@
+const PDFDocument = require('pdfkit');
+const doc = new PDFDocument();
+doc.font('Helvetica').fontSize(7);
+const w = 110;
+const text = 'ARQUIVEI SERVICOS ON LINE LTDA';
+const h1 = doc.heightOfString(text);
+const h2 = doc.heightOfString(text, { width: w });
+console.log('h1:', h1, 'h2:', h2);
+const text2 = 'C2M SERVICOS DE INFORMATICA E TELECOMUNICACOES LTDA';
+console.log('h3:', doc.heightOfString(text2, { width: w }));
